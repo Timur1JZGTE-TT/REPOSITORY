@@ -1,0 +1,52 @@
+import telebot
+from telebot import types
+ 
+bot = telebot.TeleBot('8850723087:AAH4F6iftyHFQwlbanwWO0rZKT20wvKN9dk')
+ 
+MORSE_DICT = {
+    'А': '.-', 'Б': '-...', 'В': '.--', 'Г': '--.', 'Д': '-..', 'Е': '.', 'Ж': '...-', 
+    'З': '--..', 'И': '..', 'Й': '.---', 'К': '-.-', 'Л': '.-..', 'М': '--', 'Н': '-.', 
+    'О': '---', 'П': '.-.', 'Р': '.-.', 'С': '...', 'Т': '-', 'У': '..-', 'Ф': '..-.', 
+    'Х': '....', 'Ц': '-.-.', 'Ч': '---.', 'Ш': '----', 'Щ': '--.-', 'Ъ': '--.--', 
+    'Ы': '-.--', 'Ь': '-..-', 'Э': '..-..', 'Ю': '..--', 'Я': '.-.-',
+    '1': '.----', '2': '..---', '3': '...--', '4': '....-', '5': '.....', 
+    '6': '-....', '7': '--...', '8': '---..', '9': '----.', '0': '-----', ' ': ' '
+}
+REVERSE_DICT = {value: key for key, value in MORSE_DICT.items()}
+ 
+@bot.message_handler(commands=['start'])
+def start(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.add(types.KeyboardButton("📜 Инструкция"))
+    bot.send_message(
+        message.chat.id, 
+        "Привет! Я бот-шифровальщик Азбуки Морзе. 📟\n\n"
+        "• Отправь мне текст (на русском), и я зашифрую его.\n"
+        "• Отправь мне точки и тире (через пробел), и я их расшифрую.",
+        reply_markup=markup
+    )
+ 
+@bot.message_handler(content_types=['text'])
+def handle_message(message):
+    if message.text == "📜 Инструкция":
+        bot.send_message(message.chat.id, "Примеры:\n1. Введи текст: СУРГУТ\n2. Или код: ... ..- .-. --. ..- -")
+        return
+ 
+    user_input = message.text.strip()
+ 
+    if all(char in '.- ' for char in user_input):
+        try:
+            words = user_input.split('   ')
+            decoded_text = []
+            for word in words:
+                letters = word.split(' ')
+                decoded_word = ''.join([REVERSE_DICT.get(code, '?') for code in letters if code])
+                decoded_text.append(decoded_word)
+            bot.send_message(message.chat.id, f"Результат: {' '.join(decoded_text)}")
+        except Exception:
+            bot.send_message(message.chat.id, "❌ Ошибка в коде Морзе.")
+    else:
+        encoded_text = [MORSE_DICT.get(char, '?') for char in user_input.upper()]
+        bot.send_message(message.chat.id, f"Код Морзе:\n{' '.join(encoded_text)}")
+ 
+bot.polling(none_stop=True)
